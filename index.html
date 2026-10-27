@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a237e">
+  <meta name="description" content="Game Edukasi Informatika SMP Kelas VII untuk Papan Interaktif">
+  <link rel="manifest" href="manifest.json">
+  <title>TIK Smart Adventure - Pahlawan Digital</title>
+  <style>
+    /* ==========================================================================
+       1. CSS RESET & VARIABEL TEMA (FUTURISTIK, CERIA & KONTRAS TINGGI)
+       ========================================================================== */
+    :root {
+      --primary: #1565c0;       /* Biru Utama */
+      --primary-dark: #0d47a1;
+      --secondary: #7b1fa2;     /* Ungu Elektrik */
+      --secondary-dark: #4a148c;
+      --accent-green: #2e7d32;   /* Hijau Sukses */
+      --accent-orange: #e65100;  /* Oranye Aksi */
+      --warning: #f57f17;
+      --danger: #c62828;
+      --bg-dark: #0f172a;        /* Latar Ruang Angkasa Gelap */
+      --bg-card: #1e293b;
+      --bg-card-light: #334155;
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-stack: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --touch-min: 64px;         /* Standar aksesibilitas layar sentuh IFP */
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --shadow-glow: 0 0 15px rgba(33, 150, 243, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: var(--font-stack);
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 20px;
+    }
+
+    /* Container Utama 16:9 Responsif */
+    #app-viewport {
+      width: 100vw;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ==========================================================================
+       2. NAVIGASI ATAS GLOBAL (BAR NAVIGASI PAPAN BESAR)
+       ========================================================================== */
+    header#global-nav {
+      height: 80px;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 3px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      position: sticky;
+      top: 0;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #38bdf8;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn-nav {
+      min-width: var(--touch-min);
+      height: var(--touch-min);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 2px solid var(--primary);
+      color: var(--text-light);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 0 16px;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-nav:active {
+      transform: scale(0.96);
+      background: var(--primary);
+    }
+
+    /* ==========================================================================
+       3. TATA LETAK KONTEN & SISTEM VIEW (SPA)
+       ========================================================================== */
+    main.view-container {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      max-width: 1720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Kartu & Elemen Tampilan */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      padding: 28px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 { font-size: 40px; margin-bottom: 16px; color: #38bdf8; text-shadow: var(--shadow-glow); }
+    h2 { font-size: 32px; margin-bottom: 14px; color: #f472b6; }
+    h3 { font-size: 26px; margin-bottom: 10px; color: #4ade80; }
+    p, li { font-size: 22px; line-height: 1.5; color: #e2e8f0; }
+
+    /* Tombol Utama Interaktif */
+    .btn-action {
+      min-width: 180px;
+      min-height: var(--touch-min);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 22px;
+      font-weight: 800;
+      color: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 12px 28px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+    .btn-action:active { transform: translateY(3px) scale(0.98); }
+
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #0284c7); border-bottom: 4px solid var(--primary-dark); }
+    .btn-secondary { background: linear-gradient(135deg, var(--secondary), #9333ea); border-bottom: 4px solid var(--secondary-dark); }
+    .btn-green { background: linear-gradient(135deg, var(--accent-green), #16a34a); border-bottom: 4px solid #14532d; }
+    .btn-orange { background: linear-gradient(135deg, var(--accent-orange), #ea580c); border-bottom: 4px solid #7c2d12; }
+    .btn-danger { background: linear-gradient(135deg, var(--danger), #b91c1c); border-bottom: 4px solid #7f1d1d; }
+
+    /* ==========================================================================
+       4. HALAMAN UTAMA (MENU DASHBOARD)
+       ========================================================================== */
+    .home-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 32px;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+    }
+
+    .hero-profile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      background: linear-gradient(180deg, #1e293b, #0f172a);
+      border: 3px solid #38bdf8;
+      border-radius: var(--radius-lg);
+      padding: 30px;
+    }
+
+    .robot-svg-wrap {
+      width: 220px;
+      height: 220px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.4));
+    }
+
+    .player-inputs {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .input-touch {
+      height: 60px;
+      font-size: 22px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      border: 2px solid #64748b;
+      background: #0f172a;
+      color: #f8fafc;
+      width: 100%;
+      text-align: center;
+    }
+    .input-touch:focus {
+      border-color: #38bdf8;
+      outline: none;
+      box-shadow: 0 0 10px #38bdf8;
+    }
+
+    .menu-grid-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .btn-dashboard {
+      min-height: 100px;
+      font-size: 24px;
+      font-weight: 800;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+      text-align: left;
+      border: 2px solid rgba(255,255,255,0.15);
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       5. SISTEM PETUALANGAN & PETA LEVEL
+       ========================================================================== */
+    .map-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      width: 100%;
+      padding: 20px 0;
+    }
+
+    .level-node {
+      background: var(--bg-card);
+      border: 3px solid #64748b;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .level-node.unlocked {
+      border-color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    }
+
+    .level-node.completed {
+      border-color: #4ade80;
+      background: linear-gradient(180deg, #1e293b, #14532d22);
+    }
+
+    .level-badge {
+      width: 90px;
+      height: 90px;
+      margin: 12px 0;
+    }
+
+    .stars-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    /* ==========================================================================
+       6. MODUL PEMBELAJARAN
+       ========================================================================== */
+    .module-viewer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      height: calc(100vh - 180px);
+    }
+
+    .module-content-pane {
+      overflow-y: auto;
+      padding-right: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .module-illustration-pane {
+      background: #0f172a;
+      border-radius: var(--radius-lg);
+      border: 2px dashed #475569;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .module-illustration-pane svg {
+      width: 100%;
+      max-height: 380px;
+    }
+
+    .quick-quiz-box {
+      background: #334155;
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border-left: 6px solid #f59e0b;
+      margin-top: 15px;
+    }
+
+    /* ==========================================================================
+       7. MINI GAMES
+       ========================================================================== */
+    .game-arena {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      gap: 24px;
+    }
+
+    /* Mini Game 1: Pilihan Gambar */
+    .options-grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .btn-option-game {
+      min-height: 80px;
+      font-size: 24px;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 3px solid #475569;
+      color: white;
+      cursor: pointer;
+      padding: 16px;
+    }
+
+    .btn-option-game.correct { background: #16a34a !important; border-color: #4ade80 !important; }
+    .btn-option-game.wrong { background: #dc2626 !important; border-color: #f87171 !important; }
+
+    /* Mini Game 2: Klasifikasi Interaktif (Pointer + Tap-to-Move) */
+    .classification-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .dropzone-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      min-height: 280px;
+    }
+
+    .drop-bucket {
+      background: #1e293b;
+      border: 3px dashed #64748b;
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .drop-bucket.highlight {
+      border-color: #38bdf8;
+      background: #0369a133;
+    }
+
+    .draggable-items-pool {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      min-height: 120px;
+      background: #0f172a;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 2px solid #334155;
+    }
+
+    .item-chip {
+      background: var(--primary);
+      color: white;
+      padding: 14px 24px;
+      font-size: 22px;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      cursor: grab;
+      touch-action: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 2px solid #60a5fa;
+    }
+
+    .item-chip.selected-for-move {
+      border-color: #facc15;
+      background: #ca8a04;
+      box-shadow: 0 0 15px #facc15;
+    }
+
+    /* ==========================================================================
+       8. MODE GURU & KELOMPOK
+       ========================================================================== */
+    .teacher-panel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .team-score-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .team-card {
+      background: #1e293b;
+      border: 3px solid #475569;
+      border-radius: var(--radius-md);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .team-card.active-turn {
+      border-color: #facc15;
+      box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+    }
+
+    .team-score-num {
+      font-size: 54px;
+      font-weight: 900;
+      color: #38bdf8;
+      margin: 10px 0;
+    }
+
+    /* ==========================================================================
+       9. EVALUASI OTOMATIS & LAPORAN
+       ========================================================================== */
+    .quiz-progress-bar-wrap {
+      width: 100%;
+      height: 16px;
+      background: #334155;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .quiz-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #4ade80);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 20px;
+    }
+
+    .report-table th, .report-table td {
+      border: 1px solid #475569;
+      padding: 14px;
+      text-align: left;
+    }
+
+    .report-table th {
+      background: #334155;
+      color: #38bdf8;
+    }
+
+    /* Modal Touch Dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 3px solid #38bdf8;
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 650px;
+      width: 90%;
+      text-align: center;
+    }
+
+    /* Utilitas */
+    .text-center { text-align: center; }
+    .flex-row-center { display: flex; justify-content: center; gap: 16px; }
+    .mt-4 { margin-top: 24px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div id="app-viewport">
+  <!-- Navigasi Global Bar IFP -->
+  <header id="global-nav">
+    <div class="brand-title">
+      <!-- Ikon Robot SVG -->
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="10" rx="2"/>
+        <circle cx="12" cy="5" r="2"/>
+        <path d="M12 7v4"/>
+        <line x1="8" y1="16" x2="8.01" y2="16"/>
+        <line x1="16" y1="16" x2="16.01" y2="16"/>
+      </svg>
+      <span>TIK SMART ADVENTURE</span>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-nav" id="btn-sound-toggle" aria-label="Pengaturan Suara">🔊 SUARA</button>
+      <button class="btn-nav" id="btn-fullscreen-toggle" aria-label="Layar Penuh">⛶ LAYAR PENUH</button>
+      <button class="btn-nav btn-secondary" id="btn-nav-map">🗺️ PETA LEVEL</button>
+      <button class="btn-nav btn-primary" id="btn-nav-home">🏠 BERANDA</button>
+    </div>
+  </header>
+
+  <!-- Kontainer Konten Layar -->
+  <main class="view-container">
+
+    <!-- ======================================================================
+         SCREEN 1: BERANDA / HOME DASHBOARD
+         ====================================================================== -->
+    <section id="screen-home" class="screen active">
+      <div class="home-grid">
+        <!-- Kolom Profil Peserta -->
+        <div class="hero-profile">
+          <div class="robot-svg-wrap">
+            <svg viewBox="0 0 200 200" width="100%" height="100%">
+              <circle cx="100" cy="100" r="90" fill="#1e293b" stroke="#38bdf8" stroke-width="4"/>
+              <rect x="55" y="60" width="90" height="70" rx="15" fill="#334155" stroke="#38bdf8" stroke-width="3"/>
+              <circle cx="80" cy="90" r="10" fill="#38bdf8"/>
+              <circle cx="120" cy="90" r="10" fill="#38bdf8"/>
+              <line x1="75" y1="115" x2="125" y2="115" stroke="#4ade80" stroke-width="4" stroke-linecap="round"/>
+              <line x1="100" y1="35" x2="100" y2="60" stroke="#facc15" stroke-width="4"/>
+              <circle cx="100" cy="30" r="8" fill="#facc15"/>
+              <rect x="40" y="80" width="10" height="30" rx="4" fill="#38bdf8"/>
+              <rect x="150" y="80" width="10" height="30" rx="4" fill="#38bdf8"/>
+            </svg>
+          </div>
+          <h2>Halo, Petualang!</h2>
+          <p id="label-role">Mode Pembelajaran Mandiri</p>
+
+          <div class="player-inputs">
+            <label for="input-player-name" style="font-size: 18px; color: var(--text-muted); text-align: left;">Nama Siswa / Kelompok:</label>
+            <input type="text" id="input-player-name" class="input-touch" value="Petualang Muda" placeholder="Ketik nama...">
+          </div>
+        </div>
+
+        <!-- Kolom Tombol Aksi Utama -->
+        <div class="menu-grid-buttons">
+          <button class="btn-dashboard btn-primary" id="btn-go-modules">
+            <span style="font-size: 40px;">📖</span>
+            <div>
+              <div>MULAI BELAJAR</div>
+              <small style="font-size: 16px; opacity: 0.8;">7 Modul TIK Kelas VII</small>
+            </div>
+          </button>
+
+          <button class="btn-dashboard btn-green" id="btn-go-map">
+            <span style="font-size: 40px;">🎮</span>
+            <div>
+              <div>PETUALANGAN</div>
+              <small style="font-size: 16px; opacity: 0.8;">Jelajahi Misi Mini Game</small>
+            </div>
+          </button>
+
+          <button class="btn-dashboard btn-secondary" id="btn-go-evaluation">
+            <span style="font-size: 40px;">📝</span>
+            <div>
+              <div>EVALUASI AKHIR</div>
+              <small style="font-size: 16px; opacity: 0.8;">Uji 25 Soal Komprehensif</small>
+            </div>
+          </button>
+
+          <button class="btn-dashboard btn-orange" id="btn-go-reports">
+            <span style="font-size: 40px;">📊</span>
+            <div>
+              <div>LAPORAN HASIL</div>
+              <small style="font-size: 16px; opacity: 0.8;">Cetak Skor & Analisis</small>
+            </div>
+          </button>
+
+          <button class="btn-dashboard btn-primary" id="btn-go-teacher" style="grid-column: span 2; background: linear-gradient(135deg, #312e81, #1e1b4b);">
+            <span style="font-size: 40px;">👨‍🏫</span>
+            <div>
+              <div>MODE GURU & KELOMPOK DI KELAS</div>
+              <small style="font-size: 16px; opacity: 0.8;">Bermain Cerdas Cermat di Papan Interaktif (2-4 Tim)</small>
+            </div>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 2: PETA PETUALANGAN 7 MISI
+         ====================================================================== -->
+    <section id="screen-adventure-map" class="screen">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:16px;">
+        <div>
+          <h1>Peta Petualangan Digital</h1>
+          <p>Selesaikan seluruh misi untuk meraih gelar <strong>Pahlawan Digital</strong>!</p>
+        </div>
+        <div class="card" style="padding: 12px 24px;">
+          <span>Total Skor Petualangan: </span>
+          <strong id="badge-total-score" style="color: #facc15; font-size: 28px;">0 Poin</strong>
+        </div>
+      </div>
+
+      <div class="map-container" id="map-levels-list">
+        <!-- Node level dibuat secara otomatis via JavaScript -->
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 3: TAMPILAN MODUL PEMBELAJARAN
+         ====================================================================== -->
+    <section id="screen-learning-module" class="screen">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; width:100%;">
+        <div style="display:flex; align-items:center; gap: 16px;">
+          <button class="btn-action btn-secondary" id="btn-module-back">⬅ KEMBALI</button>
+          <h2 id="mod-view-title" style="margin: 0;">Judul Modul</h2>
+        </div>
+        <button class="btn-action btn-green" id="btn-module-jump-game">MAIN TANTANGAN ➡</button>
+      </div>
+
+      <div class="module-viewer card">
+        <div class="module-content-pane" id="mod-content-text">
+          <!-- Teks Modul disuntik dinamis -->
+        </div>
+        <div class="module-illustration-pane" id="mod-content-svg">
+          <!-- Ilustrasi SVG disuntik dinamis -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 4: WADAH MINI GAME INTERAKTIF
+         ====================================================================== -->
+    <section id="screen-game-arena" class="screen">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width: 1200px; margin-bottom: 20px;">
+        <button class="btn-action btn-secondary" id="btn-game-exit">⬅ KELUAR</button>
+        <div style="text-align: center;">
+          <h2 id="game-title" style="margin:0;">Tantangan Game</h2>
+          <span id="game-status-tracker" style="font-size: 20px; color: #38bdf8;">Langkah 1/3</span>
+        </div>
+        <div class="card" style="padding: 10px 20px;">
+          <span>Skor Misi: </span>
+          <strong id="game-current-score" style="font-size: 26px; color:#4ade80;">0</strong>
+        </div>
+      </div>
+
+      <div id="game-interactive-mount" class="game-arena">
+        <!-- Wadah komponen permainan aktif -->
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 5: MODE GURU & CERDAS CERMAT KELAS
+         ====================================================================== -->
+    <section id="screen-teacher-mode" class="screen">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:16px;">
+        <h2>Pusat Kendali Guru & Kompetisi Kelas</h2>
+        <button class="btn-action btn-secondary" id="btn-teacher-back">⬅ KEMBALI KE MENU</button>
+      </div>
+
+      <div class="team-score-board" id="teacher-teams-container">
+        <!-- Kartu Kelompok disuntik dinamis -->
+      </div>
+
+      <div class="teacher-panel-grid">
+        <!-- Panel Pertanyaan Saat Ini -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="color: #38bdf8; font-weight: bold;" id="teacher-q-indicator">Pertanyaan 1/10</span>
+            <div>
+              <button class="btn-action btn-primary" style="min-width:auto; height:48px; padding:0 12px;" id="btn-teacher-prev-q">◀</button>
+              <button class="btn-action btn-primary" style="min-width:auto; height:48px; padding:0 12px;" id="btn-teacher-next-q">▶</button>
+            </div>
+          </div>
+          <p id="teacher-question-text" style="font-size: 24px; min-height: 80px; font-weight: 600;">Teks pertanyaan cerdas cermat kelas...</p>
+
+          <div id="teacher-answer-reveal" style="background:#0f172a; padding:16px; border-radius:var(--radius-sm); margin:16px 0; border:2px dashed #f59e0b;">
+            <span style="color:#f59e0b; font-weight:bold;">Kunci Pembahasan: </span>
+            <span id="teacher-key-text" style="filter: blur(8px); cursor: pointer;" title="Sentuh untuk menampilkan jawaban">Ketuk untuk Membuka Kunci</span>
+          </div>
+
+          <div class="flex-row-center mt-4">
+            <button class="btn-action btn-green" id="btn-award-current-team">✅ POIN UNTUK TIM AKTIF (+100)</button>
+            <button class="btn-action btn-orange" id="btn-pass-turn">🔄 GANTI GILIRAN TIM</button>
+          </div>
+        </div>
+
+        <!-- Panel Konfigurasi Guru -->
+        <div class="card">
+          <h3>Pengaturan Pembelajaran</h3>
+          <div style="display:flex; flex-direction:column; gap:16px; margin-top:14px;">
+            <div>
+              <label>Buka Akses Semua Level Petualangan:</label>
+              <button class="btn-action btn-primary" id="btn-unlock-all-levels" style="width:100%; margin-top:8px;">🔓 BUKA SELURUH LEVEL SEKARANG</button>
+            </div>
+            <div>
+              <label>Atur Jumlah Tim Aktif:</label>
+              <div style="display:flex; gap:10px; margin-top:8px;">
+                <button class="btn-action btn-secondary" onclick="App.setTeamCount(2)">2 TIM</button>
+                <button class="btn-action btn-secondary" onclick="App.setTeamCount(3)">3 TIM</button>
+                <button class="btn-action btn-secondary" onclick="App.setTeamCount(4)">4 TIM</button>
+              </div>
+            </div>
+            <div>
+              <button class="btn-action btn-danger" id="btn-reset-class-data" style="width:100%;">🗑 RESET SEMUA SKOR KELAS</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 6: EVALUASI KOMPREHENSIF (25 SOAL)
+         ====================================================================== -->
+    <section id="screen-evaluation" class="screen">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width:1100px; margin-bottom:12px;">
+        <span id="eval-timer-display" style="font-size:24px; font-weight:bold; color:#facc15;">⏱ Waktu: 00:00</span>
+        <span id="eval-counter" style="font-size:24px; color:#38bdf8;">Soal 1 dari 25</span>
+        <button class="btn-action btn-danger" id="btn-eval-abort" style="min-width:120px;">BATAL</button>
+      </div>
+
+      <div class="quiz-progress-bar-wrap" style="max-width:1100px;">
+        <div id="eval-progress" class="quiz-progress-fill"></div>
+      </div>
+
+      <div class="card" style="width:100%; max-width:1100px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+          <span id="eval-mod-tag" style="background:var(--primary); padding:4px 12px; border-radius:12px; font-size:16px;">Modul 1</span>
+          <span id="eval-diff-tag" style="background:#475569; padding:4px 12px; border-radius:12px; font-size:16px;">Mudah</span>
+        </div>
+        <h3 id="eval-question-title" style="min-height: 80px; font-size: 26px; line-height:1.4;">Pertanyaan evaluasi akan muncul di sini...</h3>
+
+        <div class="options-grid-4" id="eval-options-container" style="margin-top: 20px;">
+          <!-- 4 Tombol Pilihan -->
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; width:100%; max-width:1100px;">
+        <button class="btn-action btn-secondary" id="btn-eval-prev">⬅ SEBELUMNYA</button>
+        <button class="btn-action btn-green" id="btn-eval-finish">SELESAIKAN EVALUASI ✔</button>
+        <button class="btn-action btn-primary" id="btn-eval-next">SELANJUTNYA ➡</button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 7: LAPORAN HASIL & ANALISIS BELAJAR
+         ====================================================================== -->
+    <section id="screen-reports" class="screen">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:16px;">
+        <h1>Laporan Hasil Pembelajaran</h1>
+        <div class="flex-row-center">
+          <button class="btn-action btn-primary" id="btn-print-report">🖨 CETAK LAPORAN</button>
+          <button class="btn-action btn-green" id="btn-export-csv">📥 EKSPOR CSV</button>
+          <button class="btn-action btn-secondary" id="btn-report-back">🏠 KEMBALI</button>
+        </div>
+      </div>
+
+      <div class="card" style="width:100%; overflow-y:auto; max-height:calc(100vh - 180px);">
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-bottom:20px; text-align:center;">
+          <div style="background:#0f172a; padding:16px; border-radius:var(--radius-md);">
+            <div style="color:var(--text-muted); font-size:18px;">Peserta:</div>
+            <strong id="rep-name" style="font-size:24px; color:#38bdf8;">-</strong>
+          </div>
+          <div style="background:#0f172a; padding:16px; border-radius:var(--radius-md);">
+            <div style="color:var(--text-muted); font-size:18px;">Nilai Evaluasi:</div>
+            <strong id="rep-score" style="font-size:24px; color:#4ade80;">0 / 100</strong>
+          </div>
+          <div style="background:#0f172a; padding:16px; border-radius:var(--radius-md);">
+            <div style="color:var(--text-muted); font-size:18px;">Akurasi Jawaban:</div>
+            <strong id="rep-accuracy" style="font-size:24px; color:#facc15;">0%</strong>
+          </div>
+          <div style="background:#0f172a; padding:16px; border-radius:var(--radius-md);">
+            <div style="color:var(--text-muted); font-size:18px;">Predikat:</div>
+            <strong id="rep-predicate" style="font-size:24px; color:#f472b6;">-</strong>
+          </div>
+        </div>
+
+        <h3>Analisis Penguasaan Materi Berdasarkan Modul:</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Topik / Modul</th>
+              <th>Status Penguasaan</th>
+              <th>Rekomendasi Tindak Lanjut Guru</th>
+            </tr>
+          </thead>
+          <tbody id="rep-table-body">
+            <!-- Data tabel analisis modul -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ==========================================================================
+     MODAL TOUCH DIALOG (PIN GURU, NOTIFIKASI & FEEDBACK)
+     ========================================================================== -->
+<div class="modal-overlay" id="modal-container">
+  <div class="modal-box" id="modal-content">
+    <h2 id="modal-title">Perhatian</h2>
+    <p id="modal-msg" style="margin: 16px 0;"></p>
+    <div id="modal-body-custom"></div>
+    <div class="flex-row-center mt-4">
+      <button class="btn-action btn-primary" id="btn-modal-ok">OK</button>
+      <button class="btn-action btn-secondary hidden" id="btn-modal-cancel">BATAL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     10. LOGIKA JAVASCRIPT LENGKAP & MANDIRI (STANDALONE)
+     ========================================================================== -->
+<script>
+/**
+ * TIK SMART ADVENTURE - MESIN UTAMA
+ * Dirancang khusus untuk Papan Interaktif (IFP) Android
+ */
+
+/* ==========================================
+   A. SYNTHESIZER AUDIO LURING (WEB AUDIO API)
+   ========================================== */
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+  }
+
+  init() {
+    if (!this.ctx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) this.ctx = new AudioContext();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  playBeep(freq, type, duration, delay = 0) {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+      gain.gain.setValueAtTime(0.15, this.ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(this.ctx.currentTime + delay);
+      osc.stop(this.ctx.currentTime + delay + duration);
+    } catch (e) {
+      console.warn("Audio tidak dapat dijalankan:", e);
+    }
+  }
+
+  playClick() { this.playBeep(450, 'sine', 0.08); }
+  playCorrect() {
+    this.playBeep(523.25, 'triangle', 0.1, 0);      // C5
+    this.playBeep(659.25, 'triangle', 0.15, 0.08);   // E5
+    this.playBeep(783.99, 'triangle', 0.25, 0.16);   // G5
+  }
+  playWrong() {
+    this.playBeep(220, 'sawtooth', 0.2, 0);
+    this.playBeep(180, 'sawtooth', 0.25, 0.12);
+  }
+  playLevelComplete() {
+    this.playBeep(440, 'sine', 0.12, 0);
+    this.playBeep(554.37, 'sine', 0.12, 0.1);
+    this.playBeep(659.25, 'sine', 0.15, 0.2);
+    this.playBeep(880, 'sine', 0.35, 0.3);
+  }
+}
+
+const AudioFX = new SoundEngine();
+
+/* ==========================================
+   B. DATA BANK PEMBELAJARAN LENGKAP KELAS VII
+   ========================================== */
+const TIK_MODULES = [
+  {
+    id: 1,
+    title: "Modul 1: Mengenal TIK",
+    badge: "Penjelajah Digital",
+    summary: "TIK adalah payung besar terminologi yang mencakup seluruh peralatan teknis untuk memproses dan menyampaikan informasi.",
+    objectives: [
+      "Memahami definisi Teknologi Informasi dan Komunikasi (TIK).",
+      "Mengidentifikasi contoh nyata peran TIK dalam kehidupan sehari-hari.",
+      "Membedakan fungsi komputasi konvensional dan modern."
+    ],
+    content: `
+      <h3>1. Definisi dan Konsep Dasar</h3>
+      <p>Teknologi Informasi dan Komunikasi (TIK) terdiri atas dua aspek: <strong>Teknologi Informasi</strong> (terkait pengolahan, manipulasi, dan pengelolaan informasi) dan <strong>Teknologi Komunikasi</strong> (terkait transmisi atau pengiriman data antarinstrumen).</p>
+      <br>
+      <h3>2. Peran TIK Sehari-hari</h3>
+      <p>Dalam bidang pendidikan, TIK mendukung sistem pembelajaran digital seperti Interactive Smart Board. Dalam bidang perbankan, TIK memungkinkan transaksi instan melalui ATM dan mobile banking.</p>
+    `,
+    svgIllustration: `
+      <svg viewBox="0 0 300 200" width="100%" height="200">
+        <rect x="20" y="20" width="260" height="160" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="3"/>
+        <circle cx="150" cy="100" r="45" fill="#0369a1" stroke="#38bdf8" stroke-width="2"/>
+        <path d="M130 100 L170 100 M150 80 L150 120" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="60" cy="60" r="15" fill="#facc15"/>
+        <line x1="72" y1="70" x2="115" y2="88" stroke="#facc15" stroke-dasharray="4"/>
+        <circle cx="240" cy="140" r="15" fill="#4ade80"/>
+        <line x1="185" y1="112" x2="228" y2="132" stroke="#4ade80" stroke-dasharray="4"/>
+      </svg>
+    `,
+    quickQuiz: [
+      { q: "TIK merupakan gabungan dua teknologi, yaitu...", o: ["Hardware & Software", "Informasi & Komunikasi", "Listrik & Sinyal", "Mesin & Kabel"], a: 1 },
+      { q: "Contoh nyata penerapan TIK di perbankan adalah...", o: ["ATM & Mobile Banking", "Buku tabungan kertas", "Stempel kasir", "Penyimpanan uang brankas"], a: 0 },
+      { q: "Perangkat papan interaktif di kelas tergolong...", o: ["Media Komunikasi Fisik", "Instrumen TIK Modern", "Perangkat Audio Saja", "Teknologi Manual"], a: 1 }
+    ]
+  },
+  {
+    id: 2,
+    title: "Modul 2: Perangkat Keras (Hardware)",
+    badge: "Ahli Hardware",
+    summary: "Perangkat keras adalah komponen fisik komputer yang dapat disentuh, dilihat secara nyata, dan membentuk sistem komputasi terpadu.",
+    objectives: [
+      "Mengenal bentuk dan wujud fisik perangkat keras.",
+      "Mengidentifikasi fungsi keyboard, mouse, monitor, CPU, dan printer.",
+      "Menganalisis hubungan interkoneksi antarperangkat keras."
+    ],
+    content: `
+      <h3>Komponen Fisik Sistem Komputer</h3>
+      <p>Komputer tidak akan menyala tanpa komponen fisik. Komponen utama terdiri atas unit sistem (CPU, motherboard, memori) dan perangkat periferal pendukung seperti monitor, keyboard, printer, dan pengeras suara.</p>
+    `,
+    svgIllustration: `
+      <svg viewBox="0 0 300 200" width="100%" height="200">
+        <rect x="40" y="30" width="140" height="100" rx="8" fill="#334155" stroke="#60a5fa" stroke-width="3"/>
+        <rect x="50" y="40" width="120" height="80" rx="4" fill="#0f172a"/>
+        <path d="M110 130 L110 160 M80 160 L140 160" stroke="#60a5fa" stroke-width="4"/>
+        <rect x="200" y="40" width="60" height="120" rx="6" fill="#1e293b" stroke="#f472b6" stroke-width="3"/>
+        <circle cx="230" cy="65" r="6" fill="#38bdf8"/>
+        <line x1="215" y1="90" x2="245" y2="90" stroke="#64748b" stroke-width="2"/>
+      </svg>
+    `,
+    quickQuiz: [
+      { q: "Komponen komputer yang dapat disentuh langsung disebut...", o: ["Software", "Hardware", "Brainware", "Freeware"], a: 1 },
+      { q: "Perangkat yang berfungsi menampilkan visual grafis ke pengguna adalah...", o: ["Keyboard", "Monitor", "Printer", "Webcam"], a: 1 },
+      { q: "Pusat pengendali komputasi pada komputer dikenal dengan singkatan...", o: ["RAM", "CPU", "UPS", "GPU"], a: 1 }
+    ]
+  },
+  {
+    id: 3,
+    title: "Modul 3: Input, Proses, Output & Storage",
+    badge: "Master Arsitektur",
+    summary: "Pemrosesan data mengikuti siklus: Masukan (Input) ➜ Pengolahan (Process) ➜ Keluaran (Output) dan Penyimpanan (Storage).",
+    objectives: [
+      "Mengklasifikasikan komponen komputer ke 4 fungsi arsitektur.",
+      "Mengetahui alur konversi data menjadi informasi.",
+      "Memilih media penyimpanan data yang tepat (SSD, Flashdisk, HDD)."
+    ],
+    content: `
+      <h3>Siklus Pengolahan Data Elektronik</h3>
+      <p>1. <strong>Input:</strong> Pengambilan data (Keyboard, Mouse, Mic, Scanner).<br>
+         2. <strong>Process:</strong> Pengolahan data instruksi (Prosesor/CPU, ALU).<br>
+         3. <strong>Output:</strong> Penayangan hasil informasi (Monitor, Speaker, Printer).<br>
+         4. <strong>Storage:</strong> Penyimpanan data tetap (SSD, Harddisk, Flashdisk).</p>
+    `,
+    svgIllustration: `
+      <svg viewBox="0 0 300 200" width="100%" height="200">
+        <rect x="15" y="70" width="55" height="50" rx="6" fill="#3b82f6"/>
+        <text x="42" y="100" fill="#fff" font-size="12" text-anchor="middle">Input</text>
+        <path d="M75 95 L95 95" stroke="#f8fafc" stroke-width="3" marker-end="url(#arrow)"/>
+        <rect x="100" y="70" width="60" height="50" rx="6" fill="#a855f7"/>
+        <text x="130" y="100" fill="#fff" font-size="12" text-anchor="middle">Proses</text>
+        <path d="M165 95 L185 95" stroke="#f8fafc" stroke-width="3"/>
+        <rect x="190" y="70" width="55" height="50" rx="6" fill="#22c55e"/>
+        <text x="217" y="100" fill="#fff" font-size="12" text-anchor="middle">Output</text>
+        <rect x="100" y="140" width="60" height="40" rx="6" fill="#f97316"/>
+        <text x="130" y="165" fill="#fff" font-size="11" text-anchor="middle">Storage</text>
+        <path d="M130 120 L130 135" stroke="#facc15" stroke-width="3" stroke-dasharray="3"/>
+      </svg>
+    `,
+    quickQuiz: [
+      { q: "Flashdisk dan SSD termasuk kelompok...", o: ["Input Device", "Output Device", "Storage Device", "Processing Device"], a: 2 },
+      { q: "Perangkat berikut yang bertugas mengeluarkan bunyi suara adalah...", o: ["Microphone", "Webcam", "Speaker", "Scanner"], a: 2 },
+      { q: "Scanner mengubah berkas kertas menjadi digital, termasuk golongan...", o: ["Output", "Storage", "Input", "Proses"], a: 2 }
+    ]
+  },
+  {
+    id: 4,
+    title: "Modul 4: Perangkat Lunak (Software)",
+    badge: "Master Software",
+    summary: "Perangkat lunak adalah kumpulan instruksi terprogram yang menginstruksikan hardware untuk menjalankan suatu tugas.",
+    objectives: [
+      "Membedakan Sistem Operasi (OS) dan Perangkat Lunak Aplikasi.",
+      "Mengetahui fungsi peramban (browser) dan pengolah kata/angka.",
+      "Mengidentifikasi contoh perangkat lunak utilitas dan antivirus."
+    ],
+    content: `
+      <h3>Jenis-Jenis Perangkat Lunak</h3>
+      <p>1. <strong>Sistem Operasi (OS):</strong> Fondasi sistem komputer (misal: Android, Linux, Windows).<br>
+         2. <strong>Aplikasi:</strong> Program untuk tujuan produktivitas khusus (LibreOffice, Chrome, Paint).<br>
+         3. <strong>Utilitas:</strong> Pemelihara sistem (Antivirus, Disk Cleaner).</p>
+    `,
+    svgIllustration: `
+      <svg viewBox="0 0 300 200" width="100%" height="200">
+        <rect x="50" y="30" width="200" height="140" rx="10" fill="#1e293b" stroke="#a855f7" stroke-width="3"/>
+        <rect x="70" y="55" width="45" height="45" rx="8" fill="#38bdf8"/>
+        <rect x="130" y="55" width="45" height="45" rx="8" fill="#4ade80"/>
+        <rect x="190" y="55" width="45" height="45" rx="8" fill="#facc15"/>
+        <rect x="70" y="115" width="165" height="35" rx="6" fill="#334155"/>
+        <text x="152" y="138" fill="#e2e8f0" font-size="14" text-anchor="middle">Sistem Operasi (OS)</text>
+      </svg>
+    `,
+    quickQuiz: [
+      { q: "Sistem operasi yang umum terpasang di papan interaktif adalah...", o: ["Android", "BIOS", "Photoshop", "Excel"], a: 0 },
+      { q: "Perangkat lunak penjelajah internet dinamakan...", o: ["Spreadsheet", "Web Browser", "Antivirus", "Media Player"], a: 1 },
+      { q: "Software yang bertugas melindungi komputer dari malware jahat adalah...", o: ["Utility Antivirus", "Aplikasi Game", "Video Editor", "Compiler"], a: 0 }
+    ]
+  },
+  {
+    id: 5,
+    title: "Modul 5: Jaringan Komputer & Internet",
+    badge: "Penjelajah Internet",
+    summary: "Jaringan komputer menghubungkan komputer-komputer agar dapat bertukar data secara global melalui protokol internet standar.",
+    objectives: [
+      "Memahami perbedaan Local Area Network (LAN) dan Jaringan Internet global.",
+      "Membedakan fungsi Browser (peramban) dan Mesin Pencari (Search Engine).",
+      "Menerapkan kiat pencarian informasi yang akurat dan kredibel."
+    ],
+    content: `
+      <h3>Jaringan Global & Mesin Pencari</h3>
+      <p>Internet adalah jaringan interkoneksi raksasa di seluruh dunia. Browser adalah kendaraan pembuka situs (Google Chrome, Firefox), sedangkan Mesin Pencari adalah indeks katalog pencari situs (Google, Bing, DuckDuckGo).</p>
+    `,
+    svgIllustration: `
+      <svg viewBox="0 0 300 200" width="100%" height="200">
+        <circle cx="150" cy="100" r="40" fill="none" stroke="#38bdf8" stroke-width="3"/>
+        <ellipse cx="150" cy="100" rx="40" ry="18" fill="none" stroke="#38bdf8" stroke-width="2"/>
+        <line x1="150" y1="60" x2="150" y2="140" stroke="#38bdf8" stroke-width="2"/>
+        <circle cx="50" cy="60" r="14" fill="#334155" stroke="#4ade80" stroke-width="2"/>
+        <line x1="62" y1="70" x2="115" y2="88" stroke="#4ade80" stroke-width="2"/>
+        <circle cx="250" cy="60" r="14" fill="#334155" stroke="#4ade80" stroke-width="2"/>
+        <line x1="238" y1="70" x2="185" y2="88" stroke="#4ade80" stroke-width="2"/>
+        <circle cx="150" cy="175" r="14" fill="#334155" stroke="#4ade80" stroke-width="2"/>
+        <line x1="150" y1="140" x2="150" y2="161" stroke="#4ade80" stroke-width="2"/>
+      </svg>
+    `,
+    quickQuiz: [
+      { q: "Jaringan komputer lokal dalam satu ruangan laboratorium sekolah disebut...", o: ["WAN", "MAN", "LAN", "INTERNET"], a: 2 },
+      { q: "Google Chrome dan Mozilla Firefox tergolong sebagai...", o: ["Mesin Pencari", "Web Browser", "Sistem Jaringan", "Provider ISP"], a: 1 },
+      { q: "Simbol gembok aman (HTTPS) di bilah alamat browser menandakan...", o: ["Koneksi terenkripsi aman", "Situs terkunci tak bisa dibuka", "Komputer sedang virus", "Koneksi internet mati"], a: 0 }
+    ]
+  },
+  {
+    id: 6,
+    title: "Modul 6: Keamanan Digital (Cyber Security)",
+    badge: "Pelindung Data",
+    summary: "Keamanan digital mencakup proteksi data pribadi, pembuatan kata sandi tangguh, serta pencegahan bahaya rekayasa sosial seperti phishing.",
+    objectives: [
+      "Membuat struktur kata sandi yang kuat dan aman dari peretasan.",
+      "Mengenali ciri penipuan digital daring (phishing link palsu).",
+      "Menjaga kerahasiaan data privasi di ruang siber."
+    ],
+    content: `
+      <h3>Prinsip Pertahanan Siber Siswa</h3>
+      <p>1. Jangan gunakan tanggal lahir untuk kata sandi. Gunakan kombinasi huruf besar, kecil, angka, dan simbol (minimal 8 karakter).<br>
+         2. Waspadai pesan mencurigakan berisi tautan unduhan asing (*phishing*).<br>
+         3. Aktifkan otentikasi dua langkah (2FA) pada akun sekolah.</p>
+    `,
+    svgIllustration: `
+      <svg viewBox="0 0 300 200" width="100%" height="200">
+        <path d="M150 40 L210 65 V110 C210 145 150 175 150 175 C150 175 90 145 90 110 V65 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="4"/>
+        <circle cx="150" cy="100" r="12" fill="#facc15"/>
+        <rect x="144" y="110" width="12" height="18" fill="#facc15"/>
+      </svg>
+    `,
+    quickQuiz: [
+      { q: "Manakah kombinasi kata sandi yang paling aman?", o: ["12345678", "namaaku123", "B3lajar#TIK2026", "password"], a: 2 },
+      { q: "Upaya memancing korban mengeklik link palsu pencuri akun disebut...", o: ["Browsing", "Phishing", "Rendering", "Coding"], a: 1 },
+      { q: "Data pribadi yang TIDAK boleh disebar di media sosial adalah...", o: ["Hobi membaca", "Foto pemandangan", "Nomor Induk Kependudukan (NIK)", "Warna kesukaan"], a: 2 }
+    ]
+  },
+  {
+    id: 7,
+    title: "Modul 7: Etika Digital & Jejak Digital",
+    badge: "Pahlawan Digital",
+    summary: "Menjadi pahlawan digital yang beretika, memahami hak cipta ciptaan digital, serta mengelola jejak digital positif.",
+    objectives: [
+      "Menerapkan etika berkomunikasi santun di media digital.",
+      "Memahami konsep jejak digital yang tidak dapat terhapus permanen.",
+      "Menghargai karya orang lain melalui lisensi dan atribusi hak cipta."
+    ],
+    content: `
+      <h3>Etika dan Jejak Digital Abadi</h3>
+      <p>Jejak digital adalah rekam jejak riwayat aktivitas seseorang saat menjelajahi internet. Berpikirlah sebelum mengunggah (*Think before you post*). Hargai hak cipta dengan mencantumkan sumber pembuat materi.</p>
+    `,
+    svgIllustration: `
+      <svg viewBox="0 0 300 200" width="100%" height="200">
+        <ellipse cx="150" cy="110" rx="35" ry="50" fill="#334155" stroke="#4ade80" stroke-width="3"/>
+        <circle cx="135" cy="45" r="9" fill="#4ade80"/>
+        <circle cx="155" cy="40" r="11" fill="#4ade80"/>
+        <circle cx="175" cy="48" r="9" fill="#4ade80"/>
+        <path d="M125 105 Q150 140 175 105" stroke="#38bdf8" stroke-width="3" fill="none"/>
+      </svg>
+    `,
+    quickQuiz: [
+      { q: "Rekaman jejak seluruh aktivitas kita di internet dinamakan...", o: ["Jejak Digital", "History Browser Saja", "File Cache", "Koneksi Log"], a: 0 },
+      { q: "Jika mengambil gambar karya orang lain untuk tugas sekolah, kita wajib...", o: ["Mengakuinya karya sendiri", "Mencantumkan sumber pembuat", "Menjualnya kembali", "Mengganti nama pencipta"], a: 1 },
+      { q: "Perilaku merundung atau mencela teman di media sosial disebut...", o: ["Cyberbullying", "E-Commerce", "Digital Learning", "Chatting"], a: 0 }
+    ]
+  }
+];
+
+/* ==========================================
+   C. BANK SOAL EVALUASI AKHIR (25 BUTIR SOAL)
+   ========================================== */
+const EVALUATION_BANK = [
+  // Modul 1
+  { m: 1, diff: "Mudah", q: "Kepanjangan dari akronim TIK yang benar adalah...", o: ["Teknologi Informasi dan Komunikasi", "Teknik Interaksi Komputer", "Terapan Informasi Komputasi", "Tata Informasi Komunikasi"], a: 0, why: "TIK adalah singkatan baku dari Teknologi Informasi dan Komunikasi." },
+  { m: 1, diff: "Sedang", q: "Manfaat utama integrasi TIK pada bidang pendidikan modern adalah...", o: ["Menghilangkan peran guru total", "Mempermudah akses sumber belajar interaktif", "Membuat siswa tidak perlu membaca buku", "Menaikkan biaya sekolah"], a: 1, why: "TIK memperluas akses materi edukasi interaktif secara visual dan kolaboratif." },
+  { m: 1, diff: "Sulit", q: "Papan Interaktif Digital (Interactive Smartboard) menggabungkan fungsi...", o: ["Komputer, Layar Sentuh Proyektor, dan Audio", "Mesin ketik dan radio analog", "Kamera pemotret gambar saja", "Printer cetak kertas foto"], a: 0, why: "Smartboard mengintegrasikan PC internal, sensor sentuh multitouch, dan display visual." },
+  // Modul 2
+  { m: 2, diff: "Mudah", q: "Perangkat keras (Hardware) berikut yang bertugas memasukkan karakter huruf adalah...", o: ["Mouse", "Monitor", "Keyboard", "Speaker"], a: 2, why: "Keyboard adalah perangkat masukan teks primer." },
+  { m: 2, diff: "Sedang", q: "Di manakah komponen CPU, RAM, dan kartu grafis terpasang bersama di dalam casing komputer?", o: ["Motherboard", "Harddisk", "Catu Daya (PSU)", "Optical Drive"], a: 0, why: "Motherboard adalah papan sirkuit utama penampung seluruh komponen inti." },
+  { m: 2, diff: "Sedang", q: "Perangkat keras yang bertugas mengonversi energi listrik bolak-balik (AC) menjadi arus searah (DC) bagi komponen komputer adalah...", o: ["RAM", "Power Supply Unit (PSU)", "Processor", "Sound Card"], a: 1, why: "Power Supply mendistribusikan daya listrik stabil ke motherboard dan komponen lainnya." },
+  { m: 2, diff: "Sulit", q: "Resolusi layar 1920 x 1080 pada monitor interaktif memiliki aspek rasio sebesar...", o: ["4:3", "16:10", "16:9", "21:9"], a: 2, why: "1920 dibagi 1080 menghasilkan proporsi layar lebar standar 16 banding 9." },
+  // Modul 3
+  { m: 3, diff: "Mudah", q: "Peralatan berikut ini yang seluruh anggotanya merupakan perangkat keluaran (Output) adalah...", o: ["Monitor, Printer, Speaker", "Mouse, Scanner, Keyboard", "Harddisk, RAM, Flashdisk", "Mikrofon, Web Camera, Monitor"], a: 0, why: "Monitor, printer, dan speaker sama-sama menyajikan hasil olahan data ke pancaindra." },
+  { m: 3, diff: "Sedang", q: "Media penyimpanan sekunder non-volatil yang memakai sirkuit semikonduktor tanpa piringan putar mekanis dinamakan...", o: ["Harddisk Drive (HDD)", "Solid State Drive (SSD)", "Floppy Disk", "Compact Disc"], a: 1, why: "SSD mengandalkan flash memory terintegrasi dengan kecepatan baca tulis tinggi tanpa motor gerak mekanis." },
+  { m: 3, diff: "Sedang", q: "Saat guru berbicara melalui mikrofon di rapat virtual, mikrofon berperan sebagai unit...", o: ["Output suara", "Input gelombang suara", "Penyimpanan berkas audio", "Pemroses grafis"], a: 1, why: "Mikrofon menangkap getaran suara pengguna dan mengubahnya menjadi sinyal digital masukan (input)." },
+  { m: 3, diff: "Sulit", q: "Memori utama yang bersifat 'volatile' (data hilang seketika saat arus listrik padam) adalah...", o: ["ROM", "SSD", "RAM", "Harddisk"], a: 2, why: "RAM (Random Access Memory) memerlukan daya listrik terus-menerus untuk menyimpan data operasional aplikasi." },
+  // Modul 4
+  { m: 4, diff: "Mudah", q: "Sistem operasi bertindak sebagai jembatan yang menghubungkan...", o: ["Hardware dengan Pengguna (User)", "Kabel data dengan arus listrik", "Antivirus dengan virus", "Monitor dengan speaker"], a: 0, why: "OS mengelola sumber daya fisik perangkat keras dan memberikan antarmuka interaksi bagi pengguna." },
+  { m: 4, diff: "Sedang", q: "Perangkat lunak yang didistribusikan gratis namun kode program aslinya terbuka untuk dimodifikasi disebut...", o: ["Commercial Software", "Open Source Software", "Shareware", "Malware"], a: 1, why: "Open Source memberikan kebebasan akses dan modifikasi kode sumber secara legal." },
+  { m: 4, diff: "Sedang", q: "Aplikasi yang tepat untuk membuat presentasi visual interaktif di kelas adalah...", o: ["Spreadsheet Processor", "Presentation Software", "Database Management", "Disk Defragmenter"], a: 1, why: "Perangkat lunak presentasi dirancang khusus untuk memaparkan materi melalui slide interaktif." },
+  { m: 4, diff: "Sulit", q: "Program kecil yang bertindak mengenalkan perangkat keras baru (seperti pena stylus/printer baru) ke OS disebut...", o: ["Firmware Driver", "Kernel Root", "Shortcut", "Wallpaper"], a: 0, why: "Device Driver adalah instruksi khusus agar sistem operasi mengenali arsitektur periferal baru." },
+  // Modul 5
+  { m: 5, diff: "Mudah", q: "WWW dalam alamat situs web adalah singkatan dari...", o: ["World Wide Web", "World Wild Web", "Wide World Wave", "Web Wide World"], a: 0, why: "World Wide Web adalah sistem dokumen hiperteks global yang diakses lewat internet." },
+  { m: 5, diff: "Sedang", q: "Alat pengirim sinyal yang menyambungkan jaringan lokal komputer laboratorium sekolah ke penyedia internet adalah...", o: ["Router / Modem", "Soundcard", "VGA Card", "Scanner"], a: 0, why: "Router/Modem memodulasi sinyal komunikasi dari penyedia layanan internet (ISP) ke peranti lokal." },
+  { m: 5, diff: "Sedang", q: "Manakah pernyataan yang membedakan Web Browser dan Mesin Pencari (Search Engine)?", o: ["Keduanya adalah software yang sama persis", "Browser adalah wadah aplikasinya, mesin pencari adalah fasilitas indeks di situs web", "Mesin pencari terpasang di motherboard komputer", "Browser hanya bisa dibuka saat komputer mati"], a: 1, why: "Chrome adalah browser (aplikasinya), sedangkan Google Search adalah layanan mesin pencari yang diakses via browser." },
+  { m: 5, diff: "Sulit", q: "Identitas numerik unik berbentuk deretan angka biner atau desimal yang mewakili sebuah komputer di jaringan internet disebut...", o: ["MAC Address", "IP Address", "Serial Key", "Domain Name"], a: 1, why: "Internet Protocol (IP) Address merupakan alamat pengenal unik tiap komputer yang tersambung jaringan." },
+  // Modul 6
+  { m: 6, diff: "Mudah", q: "Kata sandi yang aman setidaknya harus memiliki panjang minimal...", o: ["3 karakter", "4 karakter", "8 atau lebih karakter kombinasi", "2 karakter angka"], a: 2, why: "Standar keamanan digital merekomendasikan panjang minimal 8 karakter variasi alfanumerik dan simbol." },
+  { m: 6, diff: "Sedang", q: "Seorang siswa menerima pesan WhatsApp berisi file mencurigakan berakhiran .APK dari nomor tidak dikenal. Tindakan paling aman adalah...", o: ["Langsung memasang aplikasi tersebut", "Membagikan pesan ke grup kelas", "Menghapus pesan dan tidak mengklik atau memasang berkas", "Mengisi nomor rekening orang tua"], a: 2, why: "File APK dari sumber tidak tepercaya berpotensi tinggi memuat malware peretas peranti (trojan)." },
+  { m: 6, diff: "Sulit", q: "Fitur keamanan 'Two-Factor Authentication' (2FA) memberikan proteksi tambahan berupa...", o: ["Verifikasi lapis kedua via SMS/Aplikasi Otentikator", "Kamera pemindai wajah otomatis setiap menit", "Penguncian total tanpa bisa dibuka lagi", "Pembatasan akses internet menjadi offline"], a: 0, why: "2FA memastikan keamanan ganda selain kata sandi biasa melalui kode verifikasi sekali pakai (OTP)." },
+  // Modul 7
+  { m: 7, diff: "Mudah", q: "Aturan kesantunan dan etika dalam berkomunikasi secara digital dikenal dengan istilah...", o: ["Netiket (Network Etiquette)", "Cyber Crime", "Protokol HTML", "Digital Code"], a: 0, why: "Netiket mengatur tata krama, empati, dan kesantunan saat berinteraksi di ruang siber maya." },
+  { m: 7, diff: "Sedang", q: "Mengapa jejak digital pasif maupun aktif di internet sangat sulit dihilangkan sepenuhnya?", o: ["Karena internet dapat mencetak fisik otomatis", "Karena data dapat diduplikasi, disimpan di server cadangan, atau di-tangkapan layar orang lain", "Karena kabel fiber optik menyimpan foto secara mandiri", "Karena komputer sekolah tidak memiliki tombol hapus"], a: 1, why: "Informasi digital mudah disalin, diarsipkan mesin pengindeks, atau disimpan pihak ketiga secara permanen." },
+  { m: 7, diff: "Sulit", q: "Lisensi Creative Commons (CC BY) pada karya materi gambar di internet mengizinkan orang lain menggunakannya dengan syarat...", o: ["Tidak perlu izin dan boleh mengklaim ciptaan sendiri", "Wajib mencantumkan atribusi / kredit nama pembuat aslinya", "Wajib membayar denda royalti ke pengadilan", "Hanya boleh dilihat saat malam hari"], a: 1, why: "Simbol CC BY mengharuskan pengguna karya memberikan kredit (atribusi) nama pencipta aslinya." }
+];
+
+/* ==========================================
+   D. KELAS KONTROLER APLIKASI UTAMA (APP CORE)
+   ========================================== */
+class TikAdventureApp {
+  constructor() {
+    this.playerName = "Siswa Kelas 7";
+    this.currentView = "screen-home";
+    this.soundActive = true;
+    this.activeModId = 1;
+
+    // Progres petualangan (Disimpan di localStorage)
+    this.progress = {
+      unlockedLevel: 1,
+      levelScores: [0, 0, 0, 0, 0, 0, 0],
+      levelStars: [0, 0, 0, 0, 0, 0, 0],
+      totalScore: 0
+    };
+
+    // Mode Guru & Kelompok Kelas
+    this.teamCount = 2;
+    this.currentTurn = 0;
+    this.teams = [
+      { name: "Tim Biru", score: 0 },
+      { name: "Tim Hijau", score: 0 },
+      { name: "Tim Oranye", score: 0 },
+      { name: "Tim Ungu", score: 0 }
+    ];
+    this.teacherQIndex = 0;
+    this.teacherPin = "1234";
+
+    // Evaluasi 25 Soal
+    this.evalIndex = 0;
+    this.evalUserAnswers = new Array(EVALUATION_BANK.length).fill(null);
+    this.evalTimerSeconds = 0;
+    this.evalTimerInterval = null;
+
+    // Mini Game State
+    this.activeMiniGameData = null;
+    this.selectedChipData = null;
+  }
+
+  init() {
+    this.loadStorage();
+    this.bindEvents();
+    this.renderLevelNodes();
+    this.updateUIProfile();
+  }
+
+  loadStorage() {
+    try {
+      const saved = localStorage.getItem("TIK_ADVENTURE_SAVE");
+      if (saved) {
+        const data = JSON.parse(saved);
+        this.progress = { ...this.progress, ...data.progress };
+        if (data.playerName) this.playerName = data.playerName;
+        if (data.teacherPin) this.teacherPin = data.teacherPin;
+      }
+    } catch (e) {
+      console.warn("Storage tidak dapat diakses secara lokal:", e);
+    }
+  }
+
+  saveStorage() {
+    try {
+      localStorage.setItem("TIK_ADVENTURE_SAVE", JSON.stringify({
+        progress: this.progress,
+        playerName: this.playerName,
+        teacherPin: this.teacherPin
+      }));
+    } catch (e) {
+      console.warn("Gagal menyimpan data ke storage:", e);
+    }
+  }
+
+  bindEvents() {
+    // Navigasi Top Bar
+    document.getElementById("btn-nav-home").addEventListener("click", () => this.switchView("screen-home"));
+    document.getElementById("btn-nav-map").addEventListener("click", () => this.switchView("screen-adventure-map"));
+
+    // Tombol Suara
+    document.getElementById("btn-sound-toggle").addEventListener("click", () => {
+      this.soundActive = !this.soundActive;
+      AudioFX.enabled = this.soundActive;
+      document.getElementById("btn-sound-toggle").innerText = this.soundActive ? "🔊 SUARA" : "🔇 BISU";
+      AudioFX.playClick();
+    });
+
+    // Layar Penuh (Didukung IFP Android)
+    document.getElementById("btn-fullscreen-toggle").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.toggleFullscreen();
+    });
+
+    // Input Nama
+    const nameInput = document.getElementById("input-player-name");
+    nameInput.value = this.playerName;
+    nameInput.addEventListener("change", (e) => {
+      this.playerName = e.target.value.trim() || "Petualang Muda";
+      this.saveStorage();
+    });
+
+    // Menu Tombol Dashboard
+    document.getElementById("btn-go-modules").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.openModule(1);
+    });
+    document.getElementById("btn-go-map").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.switchView("screen-adventure-map");
+    });
+    document.getElementById("btn-go-evaluation").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.startEvaluation();
+    });
+    document.getElementById("btn-go-reports").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.renderReportScreen();
+      this.switchView("screen-reports");
+    });
+    document.getElementById("btn-go-teacher").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.promptTeacherAccess();
+    });
+
+    // Tombol di Layar Modul
+    document.getElementById("btn-module-back").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.switchView("screen-home");
+    });
+    document.getElementById("btn-module-jump-game").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.launchMissionGame(this.activeModId);
+    });
+
+    // Game Exit
+    document.getElementById("btn-game-exit").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.switchView("screen-adventure-map");
+    });
+
+    // Tombol Kontrol Evaluasi
+    document.getElementById("btn-eval-prev").addEventListener("click", () => {
+      AudioFX.playClick();
+      if (this.evalIndex > 0) { this.evalIndex--; this.renderEvalCard(); }
+    });
+    document.getElementById("btn-eval-next").addEventListener("click", () => {
+      AudioFX.playClick();
+      if (this.evalIndex < EVALUATION_BANK.length - 1) { this.evalIndex++; this.renderEvalCard(); }
+    });
+    document.getElementById("btn-eval-finish").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.confirmFinishEvaluation();
+    });
+    document.getElementById("btn-eval-abort").addEventListener("click", () => {
+      AudioFX.playClick();
+      if (confirm("Apakah kamu yakin ingin membatalkan evaluasi? Nilai tidak akan tersimpan.")) {
+        clearInterval(this.evalTimerInterval);
+        this.switchView("screen-home");
+      }
+    });
+
+    // Tombol Laporan
+    document.getElementById("btn-report-back").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.switchView("screen-home");
+    });
+    document.getElementById("btn-print-report").addEventListener("click", () => {
+      AudioFX.playClick();
+      window.print();
+    });
+    document.getElementById("btn-export-csv").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.exportReportToCSV();
+    });
+
+    // Mode Guru Tombol
+    document.getElementById("btn-teacher-back").addEventListener("click", () => {
+      AudioFX.playClick();
+      this.switchView("screen-home");
+    });
+    document.getElementById("btn-teacher-prev-q").addEventListener("click", () => {
+      AudioFX.playClick();
+      if (this.teacherQIndex > 0) { this.teacherQIndex--; this.renderTeacherQuestion(); }
+    });
+    document.getElementById("btn-teacher-next-q").addEventListener("click", () => {
+      AudioFX.playClick();
+      if (this.teacherQIndex < EVALUATION_BANK.length - 1) { this.teacherQIndex++; this.renderTeacherQuestion(); }
+    });
+    document.getElementById("teacher-key-text").addEventListener("click", (e) => {
+      e.target.style.filter = "none";
+    });
+    document.getElementById("btn-award-current-team").addEventListener("click", () => {
+      this.awardTeamPoint();
+    });
+    document.getElementById("btn-pass-turn").addEventListener("click", () => {
+      this.rotateTeamTurn();
+    });
+    document.getElementById("btn-unlock-all-levels").addEventListener("click", () => {
+      AudioFX.playLevelComplete();
+      this.progress.unlockedLevel = 7;
+      this.saveStorage();
+      this.renderLevelNodes();
+      this.showModal("Akses Penuh Terbuka", "Seluruh 7 level petualangan kini dapat dimainkan bebas oleh siswa.");
+    });
+    document.getElementById("btn-reset-class-data").addEventListener("click", () => {
+      if (confirm("Reset seluruh data kemajuan dan skor tim kelas?")) {
+        localStorage.removeItem("TIK_ADVENTURE_SAVE");
+        location.reload();
+      }
+    });
+
+    // Modal OK Button
+    document.getElementById("btn-modal-ok").addEventListener("click", () => {
+      AudioFX.playClick();
+      document.getElementById("modal-container").classList.remove("active");
+    });
+  }
+
+  toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  }
+
+  switchView(viewId) {
+    document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+    const target = document.getElementById(viewId);
+    if (target) {
+      target.classList.add("active");
+      this.currentView = viewId;
+    }
+  }
+
+  showModal(title, msg, customBodyHTML = "") {
+    document.getElementById("modal-title").innerText = title;
+    document.getElementById("modal-msg").innerText = msg;
+    const bodyBox = document.getElementById("modal-body-custom");
+    bodyBox.innerHTML = customBodyHTML;
+    document.getElementById("modal-container").classList.add("active");
+  }
+
+  updateUIProfile() {
+    const total = this.progress.levelScores.reduce((a, b) => a + b, 0);
+    this.progress.totalScore = total;
+    document.getElementById("badge-total-score").innerText = `${total} Poin`;
+  }
+
+  /* ==========================================
+     E. SISTEM PETA & LEVEL PETUALANGAN
+     ========================================== */
+  renderLevelNodes() {
+    const container = document.getElementById("map-levels-list");
+    container.innerHTML = "";
+
+    TIK_MODULES.forEach((mod, idx) => {
+      const levelNum = idx + 1;
+      const isUnlocked = levelNum <= this.progress.unlockedLevel;
+      const isCompleted = this.progress.levelScores[idx] > 0;
+      const starsCount = this.progress.levelStars[idx] || 0;
+
+      const card = document.createElement("div");
+      card.className = `level-node ${isUnlocked ? 'unlocked' : ''} ${isCompleted ? 'completed' : ''}`;
+
+      let starIcons = "";
+      for (let s = 1; s <= 3; s++) {
+        starIcons += `<span style="font-size: 24px; color: ${s <= starsCount ? '#facc15' : '#475569'};">★</span>`;
+      }
+
+      card.innerHTML = `
+        <span style="font-size: 16px; color:#38bdf8; font-weight:bold;">MISI ${levelNum}</span>
+        <h3 style="font-size: 20px; margin: 8px 0;">${mod.title.split(":")[1]}</h3>
+        <div class="level-badge">
+          <svg viewBox="0 0 100 100" width="100%" height="100%">
+            <polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="${isUnlocked ? '#1e293b' : '#0f172a'}" stroke="${isUnlocked ? '#38bdf8' : '#475569'}" stroke-width="4"/>
+            <text x="50" y="58" font-size="32" text-anchor="middle" fill="${isUnlocked ? '#facc15' : '#64748b'}">${isUnlocked ? (isCompleted ? '✔' : levelNum) : '🔒'}</text>
+          </svg>
+        </div>
+        <div style="font-size: 16px; color: #94a3b8;">Lencana: ${mod.badge}</div>
+        <div class="stars-row">${starIcons}</div>
+        <div style="margin-top:10px; font-weight:bold; color:#4ade80;">Skor: ${this.progress.levelScores[idx]}</div>
+      `;
+
+      card.addEventListener("click", () => {
+        AudioFX.playClick();
+        if (isUnlocked) {
+          this.openModule(levelNum);
+        } else {
+          this.showModal("Level Terkunci", `Selesaikan misi level ${levelNum - 1} terlebih dahulu atau hubungi Bapak/Ibu Guru untuk membuka akses.`);
+        }
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  /* ==========================================
+     F. TAMPILAN MODUL & MATERI AJAR
+     ========================================== */
+  openModule(id) {
+    this.activeModId = id;
+    const mod = TIK_MODULES.find(m => m.id === id);
+    if (!mod) return;
+
+    document.getElementById("mod-view-title").innerText = mod.title;
+    document.getElementById("mod-content-svg").innerHTML = `
+      ${mod.svgIllustration}
+      <h3 style="margin-top: 16px; color: #38bdf8;">Lencana Misi: ${mod.badge}</h3>
+      <p style="font-size: 18px; color: #94a3b8; max-width: 400px;">${mod.summary}</p>
+    `;
+
+    let objHTML = "<ul>";
+    mod.objectives.forEach(o => { objHTML += `<li>${o}</li>`; });
+    objHTML += "</ul>";
+
+    document.getElementById("mod-content-text").innerHTML = `
+      <h3>Tujuan Pembelajaran:</h3>
+      ${objHTML}
+      <hr style="border-color:#334155; margin:16px 0;">
+      ${mod.content}
+      <div class="quick-quiz-box">
+        <h4 style="font-size:22px; color:#f59e0b; margin-bottom:8px;">💡 Uji Cepat Pemahaman:</h4>
+        <p style="font-weight:600;">${mod.quickQuiz[0].q}</p>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+          ${mod.quickQuiz[0].o.map((opt, oIdx) => `
+            <button class="btn-action btn-secondary" style="font-size:18px; min-height:48px; padding:6px 14px;" onclick="App.checkQuickAnswer(this, ${oIdx === mod.quickQuiz[0].a})">${opt}</button>
+          `).join("")}
+        </div>
+      </div>
+    `;
+
+    this.switchView("screen-learning-module");
+  }
+
+  checkQuickAnswer(btnEl, isCorrect) {
+    if (isCorrect) {
+      AudioFX.playCorrect();
+      btnEl.style.background = "#16a34a";
+      btnEl.innerText = "✔ BENAR!";
+    } else {
+      AudioFX.playWrong();
+      btnEl.style.background = "#dc2626";
+      btnEl.innerText = "✖ COBA LAGI";
+    }
+  }
+
+  /* ==========================================
+     G. IMPLEMENTASI LIMA MINI GAME
+     ========================================== */
+  launchMissionGame(levelId) {
+    this.switchView("screen-game-arena");
+    const container = document.getElementById("game-interactive-mount");
+    container.innerHTML = "";
+
+    // Pemilihan jenis permainan berdasarkan level
+    if (levelId === 1) this.runGameTebakGambar(container);
+    else if (levelId === 2 || levelId === 3) this.runGameKlasifikasi(container);
+    else if (levelId === 4) this.runGameKuisCerdas(container);
+    else if (levelId === 5) this.runGameBenarSalah(container);
+    else this.runGameDetektif(container);
+  }
+
+  // Mini Game 1: Tebak Gambar
+  runGameTebakGambar(container) {
+    document.getElementById("game-title").innerText = "Tantangan 1: Tebak Gambar Perangkat";
+    document.getElementById("game-status-tracker").innerText = "Tentukan nama perangkat yang tepat!";
+
+    const questions = [
+      {
+        svg: `<svg viewBox="0 0 200 120" width="260" height="150"><rect x="20" y="20" width="160" height="80" rx="8" fill="#334155" stroke="#38bdf8" stroke-width="3"/><rect x="35" y="30" width="130" height="60" rx="4" fill="#0f172a"/><circle cx="100" cy="60" r="15" fill="#38bdf8"/></svg>`,
+        ans: ["Monitor Layar Datar", "Motherboard", "Scanner Dokumen", "Printer Inkjet"],
+        correct: 0
+      },
+      {
+        svg: `<svg viewBox="0 0 200 120" width="260" height="150"><ellipse cx="100" cy="60" rx="40" ry="25" fill="#334155" stroke="#facc15" stroke-width="3"/><line x1="100" y1="35" x2="100" y2="55" stroke="#facc15" stroke-width="2"/><circle cx="100" cy="50" r="4" fill="#facc15"/></svg>`,
+        ans: ["Keyboard USB", "Mouse Komputer", "Mikrofon Meja", "Speaker Aktif"],
+        correct: 1
+      }
+    ];
+
+    let step = 0;
+    const renderStep = () => {
+      const q = questions[step];
+      container.innerHTML = `
+        <div class="card flex-row-center" style="background:#0f172a; padding:24px; width:100%;">
+          ${q.svg}
+        </div>
+        <div class="options-grid-4">
+          ${q.ans.map((opt, i) => `
+            <button class="btn-option-game" onclick="App.handleTebakGambarAnswer(this, ${i === q.correct})">${opt}</button>
+          `).join("")}
+        </div>
+      `;
+    };
+
+    this.handleTebakGambarAnswer = (btn, isCorrect) => {
+      if (btn.disabled) return;
+      btn.disabled = true;
+      if (isCorrect) {
+        AudioFX.playCorrect();
+        btn.classList.add("correct");
+        setTimeout(() => {
+          step++;
+          if (step < questions.length) {
+            renderStep();
+          } else {
+            this.finishLevel(1, 100, 3);
+          }
+        }, 1000);
+      } else {
+        AudioFX.playWrong();
+        btn.classList.add("wrong");
+      }
+    };
+
+    renderStep();
+  }
+
+  // Mini Game 2: Klasifikasi Perangkat (Drag-and-Drop & Tap-to-Move untuk Layar Sentuh)
+  runGameKlasifikasi(container) {
+    document.getElementById("game-title").innerText = "Tantangan 2: Kelompokkan Perangkat";
+    document.getElementById("game-status-tracker").innerText = "Ketuk objek, lalu ketuk wadah tujuan!";
+
+    const itemsToClassify = [
+      { id: "c1", name: "Keyboard", cat: "input" },
+      { id: "c2", name: "Monitor", cat: "output" },
+      { id: "c3", name: "Processor CPU", cat: "process" },
+      { id: "c4", name: "Flashdisk SSD", cat: "storage" },
+      { id: "c5", name: "Printer", cat: "output" },
+      { id: "c6", name: "Mouse Sentuh", cat: "input" }
+    ];
+
+    let currentItems = [...itemsToClassify];
+    this.selectedChipData = null;
+
+    const renderBuckets = () => {
+      container.innerHTML = `
+        <div class="classification-container">
+          <div class="dropzone-grid">
+            <div class="drop-bucket" data-category="input" onclick="App.handleBucketTap('input')">
+              <h3 style="color:#38bdf8;">INPUT</h3>
+              <div class="bucket-slots" id="slot-input"></div>
+            </div>
+            <div class="drop-bucket" data-category="process" onclick="App.handleBucketTap('process')">
+              <h3 style="color:#c084fc;">PROSES</h3>
+              <div class="bucket-slots" id="slot-process"></div>
+            </div>
+            <div class="drop-bucket" data-category="output" onclick="App.handleBucketTap('output')">
+              <h3 style="color:#4ade80;">OUTPUT</h3>
+              <div class="bucket-slots" id="slot-output"></div>
+            </div>
+            <div class="drop-bucket" data-category="storage" onclick="App.handleBucketTap('storage')">
+              <h3 style="color:#fb923c;">STORAGE</h3>
+              <div class="bucket-slots" id="slot-storage"></div>
+            </div>
+          </div>
+
+          <div style="text-align:center; font-size:18px; color:var(--text-muted);">Pilih salah satu komponen berikut:</div>
+          <div class="draggable-items-pool" id="pool-chips">
+            ${currentItems.map(item => `
+              <div class="item-chip" id="${item.id}" onclick="App.handleChipTap('${item.id}')">
+                📦 ${item.name}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    };
+
+    this.handleChipTap = (id) => {
+      AudioFX.playClick();
+      document.querySelectorAll(".item-chip").forEach(c => c.classList.remove("selected-for-move"));
+      const chip = document.getElementById(id);
+      if (chip) {
+        chip.classList.add("selected-for-move");
+        this.selectedChipData = currentItems.find(it => it.id === id);
+      }
+    };
+
+    this.handleBucketTap = (bucketCat) => {
+      if (!this.selectedChipData) {
+        this.showModal("Pilih Objek Dahulu", "Sentuh salah satu nama perangkat di bawah sebelum menyentuh wadah kelompok.");
+        return;
+      }
+
+      if (this.selectedChipData.cat === bucketCat) {
+        AudioFX.playCorrect();
+        const targetSlot = document.getElementById(`slot-${bucketCat}`);
+        const chipEl = document.getElementById(this.selectedChipData.id);
+        if (chipEl) chipEl.remove();
+
+        const badge = document.createElement("div");
+        badge.className = "item-chip";
+        badge.style.fontSize = "16px";
+        badge.style.padding = "6px 12px";
+        badge.style.margin = "4px 0";
+        badge.innerText = `✔ ${this.selectedChipData.name}`;
+        targetSlot.appendChild(badge);
+
+        currentItems = currentItems.filter(it => it.id !== this.selectedChipData.id);
+        this.selectedChipData = null;
+
+        if (currentItems.length === 0) {
+          setTimeout(() => {
+            this.finishLevel(this.activeModId, 100, 3);
+          }, 800);
+        }
+      } else {
+        AudioFX.playWrong();
+        this.showModal("Kategori Belum Tepat", `${this.selectedChipData.name} bukan bagian dari kelompok ${bucketCat.toUpperCase()}. Coba wadah lain!`);
+      }
+    };
+
+    renderBuckets();
+  }
+
+  // Mini Game 3: Kuis Cerdas
+  runGameKuisCerdas(container) {
+    document.getElementById("game-title").innerText = "Tantangan 3: Kuis Cerdas Software";
+    document.getElementById("game-status-tracker").innerText = "Pilihlah salah satu opsi paling tepat!";
+
+    const q = {
+      title: "Manakah di bawah ini yang tergolong sebagai PERANGKAT LUNAK SISTEM OPERASI?",
+      options: ["Adobe Photoshop", "Microsoft Windows / Android", "Google Chrome", "VLC Media Player"],
+      correct: 1
+    };
+
+    container.innerHTML = `
+      <div class="card" style="width:100%; text-align:center;">
+        <h2 style="color:#f8fafc; margin-bottom:24px;">${q.title}</h2>
+        <div class="options-grid-4">
+          ${q.options.map((opt, idx) => `
+            <button class="btn-option-game" onclick="App.handleKuisAnswer(this, ${idx === q.correct})">${opt}</button>
+          `).join("")}
+        </div>
+      </div>
+    `;
+
+    this.handleKuisAnswer = (btn, isCorrect) => {
+      if (isCorrect) {
+        AudioFX.playCorrect();
+        btn.classList.add("correct");
+        setTimeout(() => this.finishLevel(4, 100, 3), 1000);
+      } else {
+        AudioFX.playWrong();
+        btn.classList.add("wrong");
+      }
+    };
+  }
+
+  // Mini Game 4: Benar atau Salah
+  runGameBenarSalah(container) {
+    document.getElementById("game-title").innerText = "Tantangan 4: Uji Fakta Internet";
+    document.getElementById("game-status-tracker").innerText = "Tentukan apakah pernyataan berikut Benar atau Salah!";
+
+    const statement = "Alamat web yang diawali protokol 'HTTPS://' mengenkripsi data kiriman agar aman dari penyadapan.";
+    const isStatementTrue = true;
+
+    container.innerHTML = `
+      <div class="card" style="width:100%; text-align:center; padding: 40px 20px;">
+        <h2 style="font-size:32px; color:#f8fafc; line-height:1.5;">"${statement}"</h2>
+        <div class="flex-row-center mt-4" style="gap:30px;">
+          <button class="btn-action btn-green" style="min-width:240px; min-height:90px; font-size:30px;" onclick="App.handleTrueFalse(true, ${isStatementTrue})">✔ BENAR</button>
+          <button class="btn-action btn-danger" style="min-width:240px; min-height:90px; font-size:30px;" onclick="App.handleTrueFalse(false, ${isStatementTrue})">✖ SALAH</button>
+        </div>
+      </div>
+    `;
+
+    this.handleTrueFalse = (userChoice, answer) => {
+      if (userChoice === answer) {
+        AudioFX.playCorrect();
+        this.showModal("Luar Biasa!", "Jawabanmu tepat! HTTPS mengenkripsi jalur komunikasi pengguna.");
+        setTimeout(() => this.finishLevel(5, 100, 3), 1200);
+      } else {
+        AudioFX.playWrong();
+        this.showModal("Kurang Tepat", "Ingat, huruf 'S' pada HTTPS merupakan singkatan dari 'Secure' (Aman terenkripsi).");
+      }
+    };
+  }
+
+  // Mini Game 5: Detektif Digital Kasus Keamanan & Etika
+  runGameDetektif(container) {
+    document.getElementById("game-title").innerText = "Tantangan 5: Detektif Keamanan Digital";
+    document.getElementById("game-status-tracker").innerText = "Analisis bukti kasus dunia maya!";
+
+    container.innerHTML = `
+      <div class="card" style="width:100%;">
+        <div style="border-left: 6px solid #e11d48; padding-left:16px; margin-bottom:20px;">
+          <h3 style="color:#fb7185;">KASUS SIBER #07:</h3>
+          <p style="font-size:22px;">Budi menerima tautan SMS: <em>"Selamat! Anda menang kuota belajar 100GB. Unduh file dan masukkan PIN kartu keluarga di tautan: http://hadiah-palsu.xyz"</em></p>
+        </div>
+        <h3 style="margin-bottom:16px;">Sebagai Detektif Digital, apa rekomendasi tindakanmu?</h3>
+        <div class="options-grid-4">
+          <button class="btn-option-game" onclick="App.handleDetectiveSolve(false)">A. Langsung mengeklik tautan agar kuota tidak hangus</button>
+          <button class="btn-option-game" onclick="App.handleDetectiveSolve(true)">B. Mengabaikan tautan, melapor sebagai Phishing penipuan</button>
+          <button class="btn-option-game" onclick="App.handleDetectiveSolve(false)">C. Meneruskan tautan ke seluruh kontak teman sekolah</button>
+          <button class="btn-option-game" onclick="App.handleDetectiveSolve(false)">D. Memasukkan data kartu keluarga orang tua</button>
+        </div>
+      </div>
+    `;
+
+    this.handleDetectiveSolve = (isSafe) => {
+      if (isSafe) {
+        AudioFX.playLevelComplete();
+        this.showModal("Kasus Terpecahkan!", "Hebat! Kamu berhasil melindungi data pribadi dan mencegah aksi phishing.");
+        setTimeout(() => this.finishLevel(6, 150, 3), 1500);
+      } else {
+        AudioFX.playWrong();
+        this.showModal("Bahaya Siber Terdeteksi!", "Tindakan tersebut sangat berbahaya karena dapat memicu kebocoran data dan peretasan akun.");
+      }
+    };
+  }
+
+  finishLevel(levelNum, scoreWon, stars) {
+    AudioFX.playLevelComplete();
+    const idx = levelNum - 1;
+    this.progress.levelScores[idx] = Math.max(this.progress.levelScores[idx], scoreWon);
+    this.progress.levelStars[idx] = Math.max(this.progress.levelStars[idx], stars);
+
+    if (this.progress.unlockedLevel <= levelNum && levelNum < 7) {
+      this.progress.unlockedLevel = levelNum + 1;
+    }
+
+    this.saveStorage();
+    this.updateUIProfile();
+    this.renderLevelNodes();
+
+    this.showModal(
+      "Misi Selesai!",
+      `Selamat! Kamu menyelesaikan Misi ${levelNum} dengan skor ${scoreWon} Poin. Terus tingkatkan kemampuan digitalmu!`,
+      `<div style="font-size:40px; margin:16px 0; color:#facc15;">★★★</div>`
+    );
+
+    this.switchView("screen-adventure-map");
+  }
+
+  /* ==========================================
+     H. MODE GURU & CERDAS CERMAT KOMPETISI KELAS
+     ========================================== */
+  promptTeacherAccess() {
+    const pinEntered = prompt("Masukkan PIN Mode Guru (Default: 1234):");
+    if (pinEntered === this.teacherPin) {
+      AudioFX.playCorrect();
+      this.switchView("screen-teacher-mode");
+      this.renderTeacherTeams();
+      this.renderTeacherQuestion();
+    } else if (pinEntered !== null) {
+      AudioFX.playWrong();
+      alert("PIN Salah! Akses ditolak.");
+    }
+  }
+
+  setTeamCount(count) {
+    AudioFX.playClick();
+    this.teamCount = count;
+    this.renderTeacherTeams();
+  }
+
+  renderTeacherTeams() {
+    const container = document.getElementById("teacher-teams-container");
+    container.innerHTML = "";
+
+    for (let i = 0; i < this.teamCount; i++) {
+      const t = this.teams[i];
+      const isCurrent = i === this.currentTurn;
+      const card = document.createElement("div");
+      card.className = `team-card ${isCurrent ? 'active-turn' : ''}`;
+      card.innerHTML = `
+        <h3 style="color:${isCurrent ? '#facc15' : '#e2e8f0'}">${t.name} ${isCurrent ? '👉 (Giliran)' : ''}</h3>
+        <div class="team-score-num">${t.score}</div>
+        <div style="display:flex; justify-content:center; gap:8px;">
+          <button class="btn-action btn-green" style="min-width:auto; height:48px; padding:0 16px; font-size:16px;" onclick="App.adjustScore(${i}, 50)">+50</button>
+          <button class="btn-action btn-danger" style="min-width:auto; height:48px; padding:0 16px; font-size:16px;" onclick="App.adjustScore(${i}, -50)">-50</button>
+        </div>
+      `;
+      container.appendChild(card);
+    }
+  }
+
+  adjustScore(teamIdx, amount) {
+    AudioFX.playClick();
+    this.teams[teamIdx].score = Math.max(0, this.teams[teamIdx].score + amount);
+    this.renderTeacherTeams();
+  }
+
+  awardTeamPoint() {
+    AudioFX.playCorrect();
+    this.teams[this.currentTurn].score += 100;
+    this.rotateTeamTurn();
+  }
+
+  rotateTeamTurn() {
+    AudioFX.playClick();
+    this.currentTurn = (this.currentTurn + 1) % this.teamCount;
+    this.renderTeacherTeams();
+  }
+
+  renderTeacherQuestion() {
+    const q = EVALUATION_BANK[this.teacherQIndex];
+    document.getElementById("teacher-q-indicator").innerText = `Pertanyaan ${this.teacherQIndex + 1} dari ${EVALUATION_BANK.length} (Modul ${q.m})`;
+    document.getElementById("teacher-question-text").innerText = q.q;
+
+    const keyEl = document.getElementById("teacher-key-text");
+    keyEl.innerText = `${q.o[q.a]} (${q.why})`;
+    keyEl.style.filter = "blur(8px)";
+  }
+
+  /* ==========================================
+     I. SISTEM EVALUASI KOMPREHENSIF 25 SOAL
+     ========================================== */
+  startEvaluation() {
+    this.evalIndex = 0;
+    this.evalUserAnswers = new Array(EVALUATION_BANK.length).fill(null);
+    this.evalTimerSeconds = 0;
+
+    clearInterval(this.evalTimerInterval);
+    this.evalTimerInterval = setInterval(() => {
+      this.evalTimerSeconds++;
+      const mins = String(Math.floor(this.evalTimerSeconds / 60)).padStart(2, '0');
+      const secs = String(this.evalTimerSeconds % 60).padStart(2, '0');
+      document.getElementById("eval-timer-display").innerText = `⏱ Waktu: ${mins}:${secs}`;
+    }, 1000);
+
+    this.switchView("screen-evaluation");
+    this.renderEvalCard();
+  }
+
+  renderEvalCard() {
+    const q = EVALUATION_BANK[this.evalIndex];
+    const total = EVALUATION_BANK.length;
+
+    // Tracker UI
+    document.getElementById("eval-counter").innerText = `Soal ${this.evalIndex + 1} dari ${total}`;
+    document.getElementById("eval-progress").style.width = `${((this.evalIndex + 1) / total) * 100}%`;
+    document.getElementById("eval-mod-tag").innerText = `Modul ${q.m}`;
+    document.getElementById("eval-diff-tag").innerText = q.diff;
+    document.getElementById("eval-question-title").innerText = q.q;
+
+    // Render Opsi
+    const optionsBox = document.getElementById("eval-options-container");
+    optionsBox.innerHTML = "";
+
+    const userSelected = this.evalUserAnswers[this.evalIndex];
+
+    q.o.forEach((optText, optIdx) => {
+      const btn = document.createElement("button");
+      btn.className = "btn-option-game";
+      if (userSelected === optIdx) {
+        btn.style.borderColor = "#38bdf8";
+        btn.style.background = "#0369a1";
+      }
+      btn.innerText = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
+
+      btn.addEventListener("click", () => {
+        AudioFX.playClick();
+        this.evalUserAnswers[this.evalIndex] = optIdx;
+        this.renderEvalCard();
+      });
+
+      optionsBox.appendChild(btn);
+    });
+
+    // Navigasi Tombol Selesai
+    const btnFinish = document.getElementById("btn-eval-finish");
+    if (this.evalIndex === total - 1) {
+      btnFinish.classList.remove("hidden");
+    } else {
+      btnFinish.classList.add("hidden");
+    }
+  }
+
+  confirmFinishEvaluation() {
+    const unanswered = this.evalUserAnswers.filter(a => a === null).length;
+    if (unanswered > 0) {
+      if (!confirm(`Ada ${unanswered} soal yang belum terjawab. Yakin ingin mengakhiri evaluasi?`)) {
+        return;
+      }
+    }
+    clearInterval(this.evalTimerInterval);
+    this.calculateEvaluationResults();
+  }
+
+  calculateEvaluationResults() {
+    let correctCount = 0;
+    const moduleStats = {};
+
+    for (let m = 1; m <= 7; m++) {
+      moduleStats[m] = { total: 0, correct: 0 };
+    }
+
+    EVALUATION_BANK.forEach((q, idx) => {
+      moduleStats[q.m].total++;
+      if (this.evalUserAnswers[idx] === q.a) {
+        correctCount++;
+        moduleStats[q.m].correct++;
+      }
+    });
+
+    const finalGrade = Math.round((correctCount / EVALUATION_BANK.length) * 100);
+
+    // Tampilkan di Layar Laporan
+    this.renderReportScreen(finalGrade, correctCount, moduleStats);
+    this.switchView("screen-reports");
+  }
+
+  /* ==========================================
+     J. LAPORAN HASIL & EKSPOR CSV
+     ========================================== */
+  renderReportScreen(finalGrade = 0, correctCount = 0, moduleStats = null) {
+    document.getElementById("rep-name").innerText = this.playerName;
+    document.getElementById("rep-score").innerText = `${finalGrade} / 100`;
+    document.getElementById("rep-accuracy").innerText = `${Math.round((correctCount / EVALUATION_BANK.length) * 100)}% (${correctCount} Benar)`;
+
+    let predicate = "Perlu Bimbingan";
+    if (finalGrade >= 85) predicate = "Sangat Mahir (Pahlawan Digital)";
+    else if (finalGrade >= 70) predicate = "Cakap Digital";
+    else if (finalGrade >= 55) predicate = "Cukup Menguasai";
+    document.getElementById("rep-predicate").innerText = predicate;
+
+    const tbody = document.getElementById("rep-table-body");
+    tbody.innerHTML = "";
+
+    TIK_MODULES.forEach(mod => {
+      const stats = moduleStats ? moduleStats[mod.id] : { total: 3, correct: 2 };
+      const percent = Math.round((stats.correct / stats.total) * 100);
+      let statusText = `<span style="color:#4ade80;">Tuntas (${percent}%)</span>`;
+      let advice = "Pertahankan penguasaan materi konseptual dan praktik.";
+
+      if (percent < 60) {
+        statusText = `<span style="color:#f87171;">Perlu Remedial (${percent}%)</span>`;
+        advice = "Pelajari kembali modul ajar ini dan diskusikan materi bersama guru.";
+      }
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${mod.title}</strong></td>
+        <td>${statusText}</td>
+        <td>${advice}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  exportReportToCSV() {
+    const rows = [
+      ["LAPORAN PEMBELAJARAN INFORMATIKA KELAS VII"],
+      ["Nama Siswa / Kelompok", this.playerName],
+      ["Tanggal Pengunduhan", new Date().toLocaleDateString("id-ID")],
+      ["Skor Evaluasi", document.getElementById("rep-score").innerText],
+      ["Predikat", document.getElementById("rep-predicate").innerText],
+      [],
+      ["No Soal", "Modul", "Tingkat", "Jawaban Siswa", "Kunci Benar", "Status", "Pembahasan"]
+    ];
+
+    EVALUATION_BANK.forEach((q, idx) => {
+      const userAnsIdx = this.evalUserAnswers[idx];
+      const isRight = userAnsIdx === q.a;
+      rows.push([
+        idx + 1,
+        `Modul ${q.m}`,
+        q.diff,
+        userAnsIdx !== null ? q.o[userAnsIdx] : "Kosong",
+        q.o[q.a],
+        isRight ? "BENAR" : "SALAH",
+        q.why
+      ]);
+    });
+
+    let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.map(cell => `"${cell}"`).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Laporan_TIK_${this.playerName.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
+// Inisialisasi Aplikasi Saat Halaman Selesai Dimuat
+let App;
+window.addEventListener("DOMContentLoaded", () => {
+  App = new TikAdventureApp();
+  App.init();
+
+  // Registrasi Service Worker PWA jika didukung browser
+  if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('TIK Adventure PWA Service Worker Berhasil Terdaftar:', reg.scope);
+    }).catch(err => {
+      console.warn('Registrasi SW PWA gagal (wajar jika dijalankan via file:///):', err);
+    });
+  }
+});
+</script>
+</body>
+</html>
